@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import OAuth2RedirectHandler from './components/OAuth2RedirectHandler';
 import SetupVaultPage from './pages/SetupVaultPage';
+import DashboardPage from './pages/DashboardPage';
 
 // Wrapper for page transitions
 const PageWrapper = ({ children }) => (
@@ -56,9 +57,7 @@ function App() {
           path="/dashboard" 
           element={
             <PageWrapper>
-              <div className="min-h-screen bg-[#050505] text-cyan-400 font-mono flex items-center justify-center text-2xl uppercase tracking-widest drop-shadow-[0_0_10px_rgba(34,211,238,0.8)]">
-                Secure Dashboard
-              </div>
+              <DashboardPage />
             </PageWrapper>
           } 
         />
