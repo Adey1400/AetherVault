@@ -41,9 +41,10 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()) 
                 .oauth2Login(oauth2 -> oauth2
-                        .successHandler(oAuth2LoginSuccesHandler) 
+                        .successHandler(oAuth2LoginSuccesHandler) // Tell Spring to use our custom handler upon a
+                                                                  // successful login
                 )
-                
+                // Register our JWT Filter to run BEFORE the standard authentication filter
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
@@ -51,6 +52,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+        // Whitelist the React frontend URL
         configuration.setAllowedOrigins(List.of("http://localhost:5173"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
