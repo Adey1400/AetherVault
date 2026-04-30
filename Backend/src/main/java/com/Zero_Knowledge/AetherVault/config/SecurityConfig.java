@@ -36,22 +36,14 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 // Disabling CSRF (Safe to do because we are moving to stateless JWTs!)
                 .csrf(csrf -> csrf.disable())
-                // 🚨 CRITICAL ARCHITECTURAL SHIFT: Make the session STATELESS!
-                // This tells Spring: "Do NOT create a JSESSIONID cookie. Rely entirely on the
-                // JWT."
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth// 🚨 THE MAGIC FIX: Allow all preflight OPTIONS requests to pass
-                                                   // without a token!
+                .authorizeHttpRequests(auth -> auth
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                        .anyRequest().authenticated()) // Require authentication for all
-                                                       // requests
-                // .oauth2Login(Customizer.withDefaults()); // Enable OAuth2 Login with default
-                // settings
+                        .anyRequest().authenticated()) 
                 .oauth2Login(oauth2 -> oauth2
-                        .successHandler(oAuth2LoginSuccesHandler) // Tell Spring to use our custom handler upon a
-                                                                  // successful login
+                        .successHandler(oAuth2LoginSuccesHandler) 
                 )
-                // Register our JWT Filter to run BEFORE the standard authentication filter
+                
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
@@ -59,7 +51,6 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Whitelist the React frontend URL
         configuration.setAllowedOrigins(List.of("http://localhost:5173"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));

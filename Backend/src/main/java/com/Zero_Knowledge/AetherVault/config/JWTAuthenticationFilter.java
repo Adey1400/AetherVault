@@ -1,5 +1,6 @@
 package com.Zero_Knowledge.AetherVault.config;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -16,8 +17,13 @@ import com.Zero_Knowledge.AetherVault.Entity.User;
 import com.Zero_Knowledge.AetherVault.Repository.UserRepository;
 import com.Zero_Knowledge.AetherVault.service.JwtService;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.filter.OncePerRequestFilter;
 
-public class JWTAuthenticationFilter implements OncePerRequestFilter {
+public class JWTAuthenticationFilter extends OncePerRequestFilter {
 @Autowired
     private JwtService jwtService;
 
@@ -77,4 +83,4 @@ public class JWTAuthenticationFilter implements OncePerRequestFilter {
     }
 }
 
-}
+

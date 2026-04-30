@@ -15,6 +15,10 @@ import com.Zero_Knowledge.AetherVault.Entity.User;
 import com.Zero_Knowledge.AetherVault.Repository.UserRepository;
 import com.Zero_Knowledge.AetherVault.service.JwtService;
 
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 
 
 @Component
@@ -50,7 +54,7 @@ public class OAuth2LoginSuccesHandler implements AuthenticationSuccessHandler {
           System.out.println("🚨 Returning user logged in: " + email);
         }else{
             System.out.println("🚨 New user detected! Registering: " + email);
-            User newUser = new User(email ,name,"google");
+           User newUser = new User(null, email, name, "google");
             userRepository.save(newUser);
         }
 
