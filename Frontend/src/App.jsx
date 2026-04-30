@@ -7,6 +7,8 @@ import SetupVaultPage from './pages/SetupVaultPage';
 import DashboardPage from './pages/DashboardPage';
 import { DashboardLayout } from './components';
 
+
+
 // Wrapper for page transitions
 const PageWrapper = ({ children }) => (
   <motion.div
@@ -32,39 +34,41 @@ const AuthWrapper = ({ children }) => (
 
 function App() {
   const location = useLocation();
+  
+  const isSecureRoute = location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/setup-vault');
 
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route 
-          path="/" 
-          element={
-            <PageWrapper>
-              <LandingPage />
-            </PageWrapper>
-          } 
-        />
-        <Route 
-          path="/auth" 
-          element={
-            <AuthWrapper>
-              <AuthPage />
-            </AuthWrapper>
-          } 
-        />
-        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
-        <Route path="/setup-vault" element={<SetupVaultPage />} />
-        <Route 
-          path="/dashboard" 
-          element={
-            <DashboardLayout>
+          <Route 
+            path="/" 
+            element={
               <PageWrapper>
-                <DashboardPage />
+                <LandingPage />
               </PageWrapper>
-            </DashboardLayout>
-          } 
-        />
-      </Routes>
+            } 
+          />
+          <Route 
+            path="/auth" 
+            element={
+              <AuthWrapper>
+                <AuthPage />
+              </AuthWrapper>
+            } 
+          />
+          <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
+          <Route path="/setup-vault" element={<SetupVaultPage />} />
+          <Route 
+            path="/dashboard" 
+            element={
+              <DashboardLayout>
+                <PageWrapper>
+                  <DashboardPage />
+                </PageWrapper>
+              </DashboardLayout>
+            } 
+          />
+        </Routes>
     </AnimatePresence>
   );
 }

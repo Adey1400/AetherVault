@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import TopNavbar from './TopNavbar';
+
 import { FiLogOut, FiUser } from 'react-icons/fi';
 
 const DashboardLayout = ({ children }) => {
@@ -93,14 +93,8 @@ const DashboardLayout = ({ children }) => {
         </div>
       </motion.aside>
 
-      {/* Main Content Area */}
       <main className="flex-1 flex flex-col relative overflow-hidden bg-[#050505]">
-        {/* We wrap the main content such that TopNavbar appears here.
-            Note: TopNavbar uses fixed positioning. We might need to ensure
-            it doesn't overlap inappropriately if unmodified. */}
-        <div className="relative z-40">
-          <TopNavbar />
-        </div>
+
         
         {/* Content Wrapper */}
         {/* Pt-24 to account for the TopNavbar which is usually ~70-80px tall */}

@@ -16,16 +16,17 @@ const DashboardPage = () => {
   const [masterKey, setMasterKey] = useState(null);
 
   useEffect(() => {
-    // 1. On mount, check if temp_master_key exists. If not, redirect.
-    const key = sessionStorage.getItem('temp_master_key');
-    if (!key) {
+    // 1. On mount, check if masterKey exists. If not, redirect.
+    const key = sessionStorage.getItem('masterKey');
+    if (!key || key === 'undefined' || key === 'null')  {
+      console.error("No Master Key found. Vault locked."); 
       navigate('/setup-vault', { replace: true });
       return;
     }
     setMasterKey(key);
     loadSecrets(key);
   }, [navigate]);
-
+  if (!key || key === 'undefined' || key === 'null') return null;
   // 2. Fetch and decrypt secrets
   const loadSecrets = async (keyToUse) => {
     try {
@@ -38,7 +39,7 @@ const DashboardPage = () => {
         .filter(s => s.title !== 'AETHER_VERIFY') // Hide the verification lock from grid
         .map((secret) => {
           // Decrypt the blob to get plain text
-          const plainText = decryptSecret(secret.encryptedBlob, keyToUse);
+          const plainText = decryptSecret(secret.encryptedBlob, sessionStorage.getItem('masterKey'));
           return {
             ...secret,
             plainText

@@ -30,10 +30,12 @@ const SetupVaultPage = () => {
         if (decrypted === 'Vault_Unlocked') {
           // Success! The key is right. (In a real app, save this to React Context)
           sessionStorage.setItem('temp_master_key', masterKey); 
+          sessionStorage.setItem('masterKey', masterKey);
           navigate('/dashboard');
+
         } else {
           // Failure! The key is wrong.
-          setError('CRITICAL: Incorrect Master Key. Decryption Failed.');
+          setError('Invalid credentials');
         }
       } else {
         // --- NEW USER ---
@@ -46,7 +48,9 @@ const SetupVaultPage = () => {
         
         // Save to state/session and proceed
         sessionStorage.setItem('temp_master_key', masterKey);
+        sessionStorage.setItem('masterKey', masterKey);
         navigate('/dashboard');
+
       }
     } catch (err) {
       console.error(err);
