@@ -1,45 +1,48 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useVault } from '../context/VaultContext';
 import { fetchUserSecrets, saveUserSecret } from '../services/api';
 import { encryptSecret, decryptSecret } from '../utils/crypto';
-import { FiPlus, FiLogOut, FiEye, FiEyeOff, FiLock, FiShield, FiX } from 'react-icons/fi';
+import { FiPlus, FiEye, FiEyeOff, FiLock, FiShield, FiX } from 'react-icons/fi';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const { masterKey, setMasterKey } = useVault();
   const [secrets, setSecrets] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [visiblePasswords, setVisiblePasswords] = useState({});
   const [isLoading, setIsLoading] = useState(true);
+  const [masterKey, setMasterKey] = useState(null);
 
-  // 1. On mount, verify if masterKey exists. If not, redirect.
   useEffect(() => {
-    if (!masterKey) {
+    // 1. On mount, check if temp_master_key exists. If not, redirect.
+    const key = sessionStorage.getItem('temp_master_key');
+    if (!key) {
       navigate('/setup-vault', { replace: true });
       return;
     }
-    loadSecrets();
-  }, [masterKey, navigate]);
+    setMasterKey(key);
+    loadSecrets(key);
+  }, [navigate]);
 
   // 2. Fetch and decrypt secrets
-  const loadSecrets = async () => {
+  const loadSecrets = async (keyToUse) => {
     try {
       setIsLoading(true);
       const data = await fetchUserSecrets();
       // Ensure data is an array
       const secretsArray = Array.isArray(data) ? data : [];
       
-      const decryptedData = secretsArray.map((secret) => {
-        // Map over returned secrets and decrypt
-        const plainText = decryptSecret(secret.encryptedBlob, masterKey);
-        return {
-          ...secret,
-          plainText
-        };
+      const decryptedData = secretsArray
+        .filter(s => s.title !== 'AETHER_VERIFY') // Hide the verification lock from grid
+        .map((secret) => {
+          // Decrypt the blob to get plain text
+          const plainText = decryptSecret(secret.encryptedBlob, keyToUse);
+          return {
+            ...secret,
+            plainText
+          };
       });
       setSecrets(decryptedData);
     } catch (error) {
@@ -49,10 +52,9 @@ const DashboardPage = () => {
     }
   };
 
-  // 3. Encrypt and save new secret
   const handleAddSecret = async (e) => {
     e.preventDefault();
-    if (!newTitle || !newPassword) return;
+    if (!newTitle || !newPassword || !masterKey) return;
 
     try {
       const encryptedBlob = encryptSecret(newPassword, masterKey);
@@ -64,7 +66,7 @@ const DashboardPage = () => {
       setNewPassword('');
       setIsModalOpen(false);
       // Refresh list
-      loadSecrets();
+      loadSecrets(masterKey);
     } catch (error) {
       console.error("Failed to save secret:", error);
     }
@@ -77,23 +79,26 @@ const DashboardPage = () => {
     }));
   };
 
-  // 4. Logout functionality
-  const handleLogout = () => {
-    localStorage.removeItem('aether_jwt');
-    setMasterKey(null);
-    navigate('/');
-  };
-
   if (!masterKey) return null; // Avoid rendering before redirect
 
-  return (
-    <div className="min-h-screen bg-[#050505] text-white p-6 md:p-12 font-mono relative overflow-hidden">
-      {/* Background Ambience */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-cyan-900/10 blur-[150px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-900/10 blur-[150px] rounded-full pointer-events-none" />
+  // Framer motion variants for stagger effect
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.15 }
+    }
+  };
 
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100 } }
+  };
+
+  return (
+    <div className="w-full h-full text-white font-mono relative">
       {/* Header */}
-      <header className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-6">
+      <header className="relative z-20 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-6">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-white/5 rounded-xl border border-white/10 shadow-[0_0_15px_rgba(34,211,238,0.2)]">
             <FiShield className="w-8 h-8 text-cyan-400" />
@@ -104,24 +109,20 @@ const DashboardPage = () => {
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:border-cyan-400 px-5 py-2.5 rounded-lg transition-all duration-300 shadow-[0_0_10px_rgba(34,211,238,0.1)] hover:shadow-[0_0_15px_rgba(34,211,238,0.3)]"
-          >
-            <FiPlus /> <span className="uppercase text-xs tracking-widest font-semibold">Add Secret</span>
-          </button>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-400 px-5 py-2.5 rounded-lg transition-all duration-300"
-          >
-            <FiLogOut /> <span className="uppercase text-xs tracking-widest font-semibold">Disconnect</span>
-          </button>
-        </div>
+        {secrets.length > 0 && (
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 hover:border-cyan-400 px-5 py-2.5 rounded-lg transition-all duration-300 shadow-[0_0_10px_rgba(34,211,238,0.1)] hover:shadow-[0_0_15px_rgba(34,211,238,0.3)]"
+            >
+              <FiPlus /> <span className="uppercase text-xs tracking-widest font-semibold">Add Secret</span>
+            </button>
+          </div>
+        )}
       </header>
 
-      {/* Main Content: Sleek Grid */}
-      <main className="relative z-10">
+      {/* Main Content */}
+      <main className="relative z-10 w-full min-h-[50vh]">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <motion.div
@@ -131,23 +132,64 @@ const DashboardPage = () => {
             />
           </div>
         ) : secrets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-500">
-            <FiLock className="w-12 h-12 mb-4 opacity-50" />
-            <p className="tracking-widest uppercase text-sm">Vault is empty</p>
+          // --- ANTI-GRAVITY EMPTY STATE ---
+          <div className="relative flex flex-col items-center justify-center py-32 h-[60vh] w-full">
+            {/* 3 Floating Glassmorphic Orbs/Nodes */}
+            <motion.div 
+              animate={{ y: [0, -20, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute left-[20%] top-[10%] w-32 h-32 bg-cyan-500/10 rounded-full blur-xl border border-cyan-400/20 shadow-[0_0_50px_rgba(34,211,238,0.2)]"
+            />
+            <motion.div 
+              animate={{ y: [0, -25, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+              className="absolute right-[25%] top-[5%] w-24 h-24 bg-purple-500/10 rounded-full blur-xl border border-purple-400/20 shadow-[0_0_40px_rgba(168,85,247,0.2)]"
+            />
+            <motion.div 
+              animate={{ y: [0, -15, 0] }}
+              transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+              className="absolute left-[40%] bottom-[10%] w-20 h-20 bg-blue-500/10 rounded-full blur-xl border border-blue-400/20 shadow-[0_0_30px_rgba(59,130,246,0.2)]"
+            />
+
+            {/* Empty State Content */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="z-10 flex flex-col items-center"
+            >
+              <div className="p-6 rounded-full bg-white/5 border border-white/10 mb-6 backdrop-blur-md shadow-[0_0_30px_rgba(34,211,238,0.1)]">
+                <FiLock className="w-12 h-12 text-cyan-400/50" />
+              </div>
+              <h2 className="text-2xl font-bold tracking-widest uppercase mb-4 text-gray-200">Vault is Empty</h2>
+              <p className="text-gray-500 max-w-md text-center mb-10 text-sm leading-relaxed">
+                Your secure encrypted space is ready. Add your first secret to initialize the grid.
+              </p>
+              
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                animate={{ boxShadow: ['0 0 10px rgba(34,211,238,0.3)', '0 0 30px rgba(34,211,238,0.7)', '0 0 10px rgba(34,211,238,0.3)'] }}
+                transition={{ boxShadow: { duration: 2, repeat: Infinity, ease: 'easeInOut' } }}
+                onClick={() => setIsModalOpen(true)}
+                className="bg-[#050505]/50 border-2 border-cyan-400 text-cyan-300 font-bold uppercase tracking-widest py-4 px-8 rounded-full hover:bg-cyan-400/10 transition-colors flex items-center gap-3 backdrop-blur-sm"
+              >
+                <FiPlus className="w-5 h-5" /> Add Your First Secret
+              </motion.button>
+            </motion.div>
           </div>
         ) : (
+          // --- THE GRID STATE ---
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {secrets.map((secret, i) => (
               <motion.div
                 key={secret.id || i}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="bg-white/5 backdrop-blur-md border border-white/10 hover:border-cyan-500/50 rounded-xl p-6 transition-all duration-300 group shadow-lg"
+                variants={itemVariants}
+                className="bg-white/5 backdrop-blur-md border border-white/10 hover:border-cyan-500/50 rounded-xl p-6 transition-colors duration-300 group shadow-lg flex flex-col"
               >
                 <div className="flex justify-between items-start mb-6">
                   <h3 className="text-gray-200 font-semibold text-lg tracking-wide">{secret.title}</h3>
@@ -156,7 +198,7 @@ const DashboardPage = () => {
                   </div>
                 </div>
                 
-                <div className="bg-black/50 border border-white/5 rounded-lg p-4 flex justify-between items-center relative overflow-hidden">
+                <div className="mt-auto bg-black/50 border border-white/5 rounded-lg p-4 flex justify-between items-center relative overflow-hidden">
                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500/50 group-hover:bg-cyan-400 transition-colors" />
                   
                   <AnimatePresence mode="wait">
@@ -166,7 +208,7 @@ const DashboardPage = () => {
                       animate={{ opacity: 1, filter: 'blur(0px)' }}
                       exit={{ opacity: 0, filter: 'blur(4px)' }}
                       transition={{ duration: 0.2 }}
-                      className="font-mono text-cyan-300 tracking-wider pl-2"
+                      className="font-mono text-cyan-300 tracking-wider pl-2 truncate flex-1 mr-4"
                     >
                       {visiblePasswords[secret.id || i] ? secret.plainText : '••••••••••••'}
                     </motion.div>
@@ -188,8 +230,7 @@ const DashboardPage = () => {
       {/* Add Secret Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Modal Overlay */}
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -198,7 +239,6 @@ const DashboardPage = () => {
               className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             />
             
-            {/* Modal Content */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}

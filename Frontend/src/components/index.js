@@ -4,3 +4,4 @@ export { default as TopNavbar } from './TopNavbar';
 export { default as LandingLayout } from './LandingLayout';
 export { default as MatrixBackground } from './MatrixBackground';
 export { default as Loader } from './Loader';
+export { default as DashboardLayout } from './DashboardLayout';

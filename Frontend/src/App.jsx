@@ -5,6 +5,7 @@ import AuthPage from './pages/AuthPage';
 import OAuth2RedirectHandler from './components/OAuth2RedirectHandler';
 import SetupVaultPage from './pages/SetupVaultPage';
 import DashboardPage from './pages/DashboardPage';
+import { DashboardLayout } from './components';
 
 // Wrapper for page transitions
 const PageWrapper = ({ children }) => (
@@ -56,9 +57,11 @@ function App() {
         <Route 
           path="/dashboard" 
           element={
-            <PageWrapper>
-              <DashboardPage />
-            </PageWrapper>
+            <DashboardLayout>
+              <PageWrapper>
+                <DashboardPage />
+              </PageWrapper>
+            </DashboardLayout>
           } 
         />
       </Routes>

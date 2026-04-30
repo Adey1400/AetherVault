@@ -1,34 +1,35 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const OAuth2RedirectHandler = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const hasProcessed = useRef(false); // This stops the double-render bug!
 
   useEffect(() => {
-    // Grab the token from the URL search parameters
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
+    // If we already ran this, exit immediately
+    if (hasProcessed.current) return;
+    hasProcessed.current = true;
+
+    const searchParams = new URLSearchParams(location.search);
+    const token = searchParams.get('token');
 
     if (token) {
-      // Save token to localStorage
+      console.log("Token caught securely!");
+      // 1. Save the token
       localStorage.setItem('aether_jwt', token);
-
-      // Immediately strip the token from the URL for security
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState(null, '', cleanUrl);
-
-      // Redirect to /setup-vault (with a slight delay to show the animation)
-      setTimeout(() => {
-        navigate('/setup-vault');
-      }, 1500);
+      
+      // 2. Clean the URL for security
+      window.history.replaceState({}, document.title, '/setup-vault');
+      
+      // 3. Send them to the Vault Setup
+      navigate('/setup-vault', { replace: true });
     } else {
-      // If no token is found, safely redirect back to home
-      setTimeout(() => {
-        navigate('/');
-      }, 1500);
+      console.log("No token found, returning to landing.");
+      navigate('/', { replace: true });
     }
-  }, [navigate]);
+  }, [location, navigate]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#050505] overflow-hidden relative">
