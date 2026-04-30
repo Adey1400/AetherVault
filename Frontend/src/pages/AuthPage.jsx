@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
 import { FiMail, FiLock, FiKey, FiEye, FiEyeOff, FiArrowLeft, FiAlertTriangle } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 
-const AuthPage = ({ onPageChange }) => {
+const AuthPage = () => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showMasterPassword, setShowMasterPassword] = useState(false);
@@ -65,7 +67,7 @@ const AuthPage = ({ onPageChange }) => {
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
       {/* Back Button */}
       <button 
-        onClick={() => onPageChange('landing')}
+        onClick={() => navigate('/')}
         className="absolute top-8 left-8 flex items-center gap-2 text-gray-400 hover:text-cyan-glow transition-colors font-mono z-20"
       >
         <FiArrowLeft /> Back

@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion';
 import { FiArrowRight, FiLock, FiDatabase, FiUnlock } from 'react-icons/fi';
 import LandingLayout from '../components/LandingLayout';
+import { useNavigate } from 'react-router-dom';
 
-const LandingPage = ({ onPageChange }) => {
+const LandingPage = () => {
+  const navigate = useNavigate();
   // Text reveal animation for hero
   const textRevealVariants = {
     hidden: { opacity: 0 },
@@ -154,7 +156,7 @@ const LandingPage = ({ onPageChange }) => {
               initial="rest"
               whileHover="hover"
               whileTap={{ scale: 0.95 }}
-              onClick={() => onPageChange('auth')}
+              onClick={() => navigate('/auth')}
               className="btn-cyber btn-cyber-primary px-8 md:px-12 py-4 text-lg font-semibold flex items-center justify-center gap-3 mx-auto"
             >
               Get Started Free
@@ -323,7 +325,7 @@ const LandingPage = ({ onPageChange }) => {
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
             <button 
-              onClick={() => onPageChange('auth')}
+              onClick={() => navigate('/auth')}
               className="btn-cyber btn-cyber-primary px-8 py-3 flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               Start Free Trial
