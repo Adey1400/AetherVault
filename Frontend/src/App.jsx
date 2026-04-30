@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import LandingPage from './pages/LandingPage';
+import AuthPage from './pages/AuthPage';
 import Loader from './components/Loader';
 
 function App() {
@@ -13,7 +14,7 @@ function App() {
     setTimeout(() => {
       setCurrentPage(page);
       setIsLoading(false);
-    }, 1500);
+    }, 800);
   };
 
   return (
@@ -29,6 +30,17 @@ function App() {
             transition={{ duration: 0.6 }}
           >
             <LandingPage onPageChange={handlePageTransition} />
+          </motion.div>
+        )}
+        {currentPage === 'auth' && (
+          <motion.div
+            key="auth"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <AuthPage onPageChange={handlePageTransition} />
           </motion.div>
         )}
       </AnimatePresence>
