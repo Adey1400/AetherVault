@@ -17,19 +17,7 @@ const AuthPage = () => {
     masterPassword: ''
   });
 
-  // Handle URL redirect with JWT
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-    if (token) {
-      // Store token, e.g., localStorage.setItem('jwt', token);
-      console.log('Received JWT from redirect:', token);
-      // Remove token from URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-      // Redirect to dashboard (simulate for now)
-      // onPageChange('dashboard');
-    }
-  }, []);
+
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

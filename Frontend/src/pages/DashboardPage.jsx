@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { fetchUserSecrets, saveUserSecret } from '../services/api';
+// Make sure to add deleteUserSecret to your api.js exports
+import { fetchUserSecrets, saveUserSecret, deleteUserSecret } from '../services/api';
 import { encryptSecret, decryptSecret } from '../utils/crypto';
-import { FiPlus, FiEye, FiEyeOff, FiLock, FiShield, FiX } from 'react-icons/fi';
+import { FiPlus, FiEye, FiEyeOff, FiLock, FiShield, FiX, FiTrash2 } from 'react-icons/fi';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ const DashboardPage = () => {
     setMasterKey(key);
     loadSecrets(key);
   }, [navigate]);
-  if (!key || key === 'undefined' || key === 'null') return null;
+
   // 2. Fetch and decrypt secrets
   const loadSecrets = async (keyToUse) => {
     try {
@@ -39,7 +40,7 @@ const DashboardPage = () => {
         .filter(s => s.title !== 'AETHER_VERIFY') // Hide the verification lock from grid
         .map((secret) => {
           // Decrypt the blob to get plain text
-          const plainText = decryptSecret(secret.encryptedBlob, sessionStorage.getItem('masterKey'));
+          const plainText = decryptSecret(secret.encryptedBlob, keyToUse);
           return {
             ...secret,
             plainText
@@ -58,6 +59,7 @@ const DashboardPage = () => {
     if (!newTitle || !newPassword || !masterKey) return;
 
     try {
+      setIsLoading(true);
       const encryptedBlob = encryptSecret(newPassword, masterKey);
       await saveUserSecret({
         title: newTitle,
@@ -67,9 +69,24 @@ const DashboardPage = () => {
       setNewPassword('');
       setIsModalOpen(false);
       // Refresh list
-      loadSecrets(masterKey);
+      await loadSecrets(masterKey);
     } catch (error) {
       console.error("Failed to save secret:", error);
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteSecret = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this secret? This action is permanent.")) return;
+    
+    try {
+      setIsLoading(true);
+      await deleteUserSecret(id);
+      // Refresh list after deletion
+      await loadSecrets(masterKey);
+    } catch (error) {
+      console.error("Failed to delete secret:", error);
+      setIsLoading(false);
     }
   };
 
@@ -80,7 +97,8 @@ const DashboardPage = () => {
     }));
   };
 
-  if (!masterKey) return null; // Avoid rendering before redirect
+  // Prevent rendering before redirect check completes
+  if (!masterKey) return null; 
 
   // Framer motion variants for stagger effect
   const containerVariants = {
@@ -194,8 +212,17 @@ const DashboardPage = () => {
               >
                 <div className="flex justify-between items-start mb-6">
                   <h3 className="text-gray-200 font-semibold text-lg tracking-wide">{secret.title}</h3>
-                  <div className="p-2 bg-black/40 rounded-lg text-gray-400 border border-white/5">
-                    <FiLock className="w-4 h-4" />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleDeleteSecret(secret.id)}
+                      className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg text-red-400 border border-red-500/20 transition-colors"
+                      title="Delete Secret"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                    </button>
+                    <div className="p-2 bg-black/40 rounded-lg text-gray-400 border border-white/5">
+                      <FiLock className="w-4 h-4" />
+                    </div>
                   </div>
                 </div>
                 

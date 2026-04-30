@@ -11,11 +11,13 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name="secrets")
 @NoArgsConstructor
+@Data
 @AllArgsConstructor
 @Builder
 public class Secret {
