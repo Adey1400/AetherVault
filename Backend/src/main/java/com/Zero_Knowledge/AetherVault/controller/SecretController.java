@@ -19,6 +19,7 @@ import com.Zero_Knowledge.AetherVault.Entity.Secret;
 import com.Zero_Knowledge.AetherVault.Entity.User;
 import com.Zero_Knowledge.AetherVault.Repository.SecretRepository;
 import com.Zero_Knowledge.AetherVault.Repository.UserRepository;
+import com.Zero_Knowledge.AetherVault.service.UserService;
 
 @RestController
 @RequestMapping("/api/secrets")
@@ -27,20 +28,14 @@ public class SecretController {
     @Autowired
     private SecretRepository secretRepository;
     
-    @Autowired
-    private UserRepository userRepository;
 
-   //retrieving authenticated user
-    private User getAuthenticatedUser(){
-        Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
-        String email= authentication.getName();
-        return userRepository.findByEmail(email)
-               .orElseThrow(()-> new RuntimeException("User Not Found"));
-    }
+
+    @Autowired
+    private UserService userService;
     //Fetching the user's secret
     @GetMapping
     public ResponseEntity<List<Secret>> getUserSecrets(){
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
         List<Secret> secrets= secretRepository.findByUser(user);
         return ResponseEntity.ok(secrets);
     }
@@ -48,7 +43,7 @@ public class SecretController {
     //Saving a new encrypted Blob
     @PostMapping
     public ResponseEntity<?> saveSecret(@RequestBody Map<String,String> payload){
-    User user =getAuthenticatedUser();
+    User user =userService.getAuthenticatedUser();
     String title= payload.get("title");
     String encryptedBlob = payload.get("encryptedBlob");
     
@@ -67,7 +62,7 @@ public class SecretController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteSecret(@PathVariable Long id) {
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
         Secret secret = secretRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Secret not found"));
 

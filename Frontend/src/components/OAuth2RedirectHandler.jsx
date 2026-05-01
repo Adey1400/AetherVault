@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { useNavigate,useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+// Import the API call!
+import { fetchCurrentUser } from '../services/api';
 
 const OAuth2RedirectHandler = () => {
   const navigate = useNavigate();
@@ -12,23 +14,42 @@ const OAuth2RedirectHandler = () => {
     if (hasProcessed.current) return;
     hasProcessed.current = true;
 
-    const searchParams = new URLSearchParams(location.search);
-    const token = searchParams.get('token');
+    const processAuth = async () => {
+      const searchParams = new URLSearchParams(location.search);
+      const token = searchParams.get('token');
 
-    if (token) {
-      console.log("Token caught securely!");
-      // 1. Save the token
-      localStorage.setItem('aether_jwt', token);
-      
-      // 2. Clean the URL for security
-      window.history.replaceState({}, document.title, '/setup-vault');
-      
-      // 3. Send them to the Vault Setup
-      navigate('/setup-vault', { replace: true });
-    } else {
-      console.log("No token found, returning to landing.");
-      navigate('/', { replace: true });
-    }
+      if (token) {
+        console.log("Token caught securely!");
+        // 1. Save the token
+        localStorage.setItem('aether_jwt', token);
+        
+        // 2. Clean the URL for security (removes the token from the browser history/address bar)
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        try {
+          // 3. Fetch the user profile (Axios interceptor attaches the token automatically)
+          const user = await fetchCurrentUser();
+
+          // 4. The Zero-Knowledge Routing Logic!
+          if (user.vaultInitialized) {
+            console.log("Returning user detected. Sending to Vault.");
+            navigate('/dashboard', { replace: true });
+          } else {
+            console.log("New user detected. Forcing Master Key Setup.");
+            navigate('/setup-vault', { replace: true });
+          }
+        } catch (error) {
+          console.error("Error verifying user session:", error);
+          // If the token is invalid or backend is down, boot them to the landing page
+          navigate('/', { replace: true });
+        }
+      } else {
+        console.log("No token found, returning to landing.");
+        navigate('/', { replace: true });
+      }
+    };
+
+    processAuth();
   }, [location, navigate]);
 
   return (

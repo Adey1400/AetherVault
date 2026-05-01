@@ -52,4 +52,23 @@ export const deleteUserSecret = async (id) => {
   return response.data;
 };
 
+
+/**
+ * Fetch the current authenticated user's profile
+ * @returns {Promise<any>} Response data
+ */
+export const fetchCurrentUser = async () => {
+  const response = await api.get('/api/users/me');
+  return response.data;
+};
+
+/**
+ * Tell the backend that the user has generated and saved their Master Key
+ * @returns {Promise<any>} Response data
+ */
+export const initializeVaultStatus = async () => {
+  const response = await api.post('/api/users/initialize-vault');
+  return response.data;
+};
+
 export default api;

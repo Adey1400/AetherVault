@@ -54,7 +54,7 @@ public class OAuth2LoginSuccesHandler implements AuthenticationSuccessHandler {
           System.out.println("🚨 Returning user logged in: " + email);
         }else{
             System.out.println("🚨 New user detected! Registering: " + email);
-           User newUser = new User(null, email, name, "google");
+           User newUser = new User(null, email, name, "google",false);
             userRepository.save(newUser);
         }
 
@@ -63,9 +63,6 @@ public class OAuth2LoginSuccesHandler implements AuthenticationSuccessHandler {
         System.out.println("Generated JWT: "+ token);
 
         //For now, redirect to a custom dashboard endpoint to prove we control the routing.
-
-       //OLD:  response.sendRedirect("/dashboard?token?="+ token);
-        // NEW: Redirect straight to the React frontend!
         response.sendRedirect("http://localhost:5173/oauth2/redirect?token=" + token);
     }
 }

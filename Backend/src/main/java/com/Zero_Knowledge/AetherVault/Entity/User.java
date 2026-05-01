@@ -30,5 +30,6 @@ public class User {
 
 
     private String provider;
-
+    @Column(name = "is_vault_initialized", nullable = false)
+    private boolean isVaultInitialized = false;
 }
