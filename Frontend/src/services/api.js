@@ -42,4 +42,14 @@ export const saveUserSecret = async (payload) => {
   return response.data;
 };
 
+/**
+ * Delete a user secret by ID
+ * @param {number|string} id The ID of the secret to delete
+ * @returns {Promise<any>} Response data
+ */
+export const deleteUserSecret = async (id) => {
+  const response = await api.delete(`/api/secrets/${id}`);
+  return response.data;
+};
+
 export default api;
