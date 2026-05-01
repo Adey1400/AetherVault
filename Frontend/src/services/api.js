@@ -9,7 +9,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Automatically retrieve the token from localStorage
-    const token = localStorage.getItem('aether_jwt');
+    const token = localStorage.getItem('aether_jwt')||sessionStorage.getItem('aether_jwt');
     
     // If a token exists, attach it as a Bearer token
     if (token) {
@@ -68,6 +68,22 @@ export const fetchCurrentUser = async () => {
  */
 export const initializeVaultStatus = async () => {
   const response = await api.post('/api/users/initialize-vault');
+  return response.data;
+};
+
+/**
+ * Register a new user with Email/Password
+ */
+export const registerUser = async (email, password) => {
+  const response = await api.post('/api/auth/register', { email, password });
+  return response.data;
+};
+
+/**
+ * Login an existing user with Email/Password
+ */
+export const loginUser = async (email, password) => {
+  const response = await api.post('/api/auth/login', { email, password });
   return response.data;
 };
 

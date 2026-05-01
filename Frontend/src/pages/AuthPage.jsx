@@ -1,43 +1,73 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
-import { FiMail, FiLock, FiKey, FiEye, FiEyeOff, FiArrowLeft, FiAlertTriangle } from 'react-icons/fi';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowLeft } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+// IMPORT YOUR API CALLS
+import { loginUser, registerUser, fetchCurrentUser } from '../services/api';
 
 const AuthPage = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const [showMasterPassword, setShowMasterPassword] = useState(false);
   const [shake, setShake] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-    masterPassword: ''
+    password: ''
   });
-
-
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simple validation
-    if (!formData.email || !formData.password || (!isLogin && !formData.masterPassword)) {
+    setErrorMsg('');
+
+    if (!formData.email || !formData.password) {
       setShake(true);
       setTimeout(() => setShake(false), 500);
       return;
     }
-    
-    // Process form
-    console.log('Form submitted:', formData);
+
+    setIsLoading(true);
+
+    try {
+      let data;
+      // 1. Call the appropriate backend endpoint
+      if (isLogin) {
+        data = await loginUser(formData.email, formData.password);
+      } else {
+        data = await registerUser(formData.email, formData.password);
+      }
+
+      // 2. Save the JWT
+      localStorage.setItem('aether_jwt', data.token);
+
+      // 3. Fetch user profile to check vault status
+      const user = await fetchCurrentUser();
+
+      // 4. Zero-Knowledge Routing!
+      if (user.vaultInitialized) {
+        navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/setup-vault', { replace: true });
+      }
+
+    } catch (error) {
+      console.error('Auth Error:', error);
+      setErrorMsg(error.response?.data?.error || 'Authentication failed. Please try again.');
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleLogin = () => {
-    // Redirect to backend OAuth2 endpoint
     window.location.href = 'http://localhost:8080/oauth2/authorization/google';
   };
 
@@ -53,52 +83,33 @@ const AuthPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Back Button */}
-      <button 
-        onClick={() => navigate('/')}
-        className="absolute top-8 left-8 flex items-center gap-2 text-gray-400 hover:text-cyan-glow transition-colors font-mono z-20"
-      >
+      <button onClick={() => navigate('/')} className="absolute top-8 left-8 flex items-center gap-2 text-gray-400 hover:text-cyan-glow transition-colors font-mono z-20">
         <FiArrowLeft /> Back
       </button>
 
-      {/* Decorative Background Elements */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-glow/5 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-glow/5 rounded-full blur-[100px] pointer-events-none" />
 
-      <motion.div
-        variants={pageVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        className="w-full max-w-md z-10 relative"
-      >
-        <motion.div 
-          animate={shake ? "shake" : ""} 
-          variants={shakeVariants}
-          className="glass-lg glow-border-cyan p-8 md:p-10 relative overflow-hidden backdrop-blur-3xl"
-        >
-          {/* Header */}
+      <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-md z-10 relative">
+        <motion.div animate={shake ? "shake" : ""} variants={shakeVariants} className="glass-lg glow-border-cyan p-8 md:p-10 relative overflow-hidden backdrop-blur-3xl">
+          
           <div className="text-center mb-8 relative z-10">
             <h2 className="text-3xl font-bold bg-gradient-to-r from-cyan-glow to-purple-glow bg-clip-text text-transparent mb-2">
-              {isLogin ? 'Welcome Back' : 'Initialize Vault'}
+              {isLogin ? 'Welcome Back' : 'Create Account'}
             </h2>
             <p className="text-gray-400 font-mono text-sm">
-              {isLogin ? 'Authenticate to access your secure data' : 'Create your zero-knowledge account'}
+              {isLogin ? 'Authenticate to access your secure data' : 'Initialize your zero-knowledge vault'}
             </p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
             <div>
               <label className="block text-xs font-mono text-gray-400 mb-1 uppercase tracking-wider">Email</label>
               <div className="relative group">
-                <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-glow transition-colors" />
+                <FiMail size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-glow transition-colors" />
                 <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 bg-black/20 border border-white/10 rounded-lg focus:border-cyan-glow focus:ring-1 focus:ring-cyan-glow/50 text-white placeholder-gray-600 transition-all font-mono"
+                  type="email" name="email" value={formData.email} onChange={handleChange} required
+                  className="w-full !pl-12 pr-4 py-3 bg-black/20 border border-white/10 rounded-lg focus:border-cyan-glow focus:ring-1 focus:ring-cyan-glow/50 text-white placeholder-gray-600 transition-all font-mono"
                   placeholder="agent@aethervault.io"
                 />
               </div>
@@ -107,75 +118,28 @@ const AuthPage = () => {
             <div>
               <label className="block text-xs font-mono text-gray-400 mb-1 uppercase tracking-wider">Password</label>
               <div className="relative group">
-                <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-glow transition-colors" />
+                <FiLock size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-glow transition-colors" />
                 <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-10 py-3 bg-black/20 border border-white/10 rounded-lg focus:border-cyan-glow focus:ring-1 focus:ring-cyan-glow/50 text-white placeholder-gray-600 transition-all font-mono"
-                  placeholder="••••••••"
+                  type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleChange} required
+                  className="w-full !pl-12 pr-12 py-3 bg-black/20 border border-white/10 rounded-lg focus:border-cyan-glow focus:ring-1 focus:ring-cyan-glow/50 text-white placeholder-gray-600 transition-all font-mono"
+                  placeholder="••••••••••••"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
-                >
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
                   {showPassword ? <FiEyeOff /> : <FiEye />}
                 </button>
               </div>
             </div>
 
             <AnimatePresence>
-              {!isLogin && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="pt-2">
-                    <label className="block text-xs font-mono text-cyan-glow mb-1 uppercase tracking-wider flex items-center gap-1">
-                      <FiKey /> Master Password
-                    </label>
-                    <div className="relative group">
-                      <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-glow/50 group-focus-within:text-cyan-glow transition-colors" />
-                      <input
-                        type={showMasterPassword ? "text" : "password"}
-                        name="masterPassword"
-                        value={formData.masterPassword}
-                        onChange={handleChange}
-                        className="w-full pl-10 pr-10 py-3 bg-cyan-glow/5 border border-cyan-glow/30 rounded-lg focus:border-cyan-glow focus:ring-1 focus:ring-cyan-glow text-white placeholder-cyan-glow/40 transition-all font-mono"
-                        placeholder="Your ultimate encryption key"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowMasterPassword(!showMasterPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-cyan-glow/50 hover:text-cyan-glow transition-colors"
-                      >
-                        {showMasterPassword ? <FiEyeOff /> : <FiEye />}
-                      </button>
-                    </div>
-                    <motion.div 
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-200 flex items-start gap-2 shadow-[0_0_15px_rgba(239,68,68,0.1)]"
-                    >
-                      <FiAlertTriangle className="text-red-500 mt-0.5 flex-shrink-0 text-base" />
-                      <p>
-                        <strong className="text-red-400">WARNING:</strong> We never store this. If you lose it, your data is gone forever.
-                      </p>
-                    </motion.div>
-                  </div>
+              {errorMsg && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="text-red-400 text-xs font-mono bg-red-500/10 border border-red-500/20 p-3 rounded text-center mt-2">
+                  {errorMsg}
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <button
-              type="submit"
-              className="w-full btn-cyber btn-cyber-primary py-3 mt-6"
-            >
-              {isLogin ? 'Authenticate' : 'Initialize'}
+            <button type="submit" disabled={isLoading} className="w-full btn-cyber btn-cyber-primary py-3 mt-6">
+              {isLoading ? 'Processing...' : (isLogin ? 'Authenticate' : 'Initialize')}
             </button>
           </form>
 
@@ -185,25 +149,20 @@ const AuthPage = () => {
             <div className="flex-1 h-px bg-white/10" />
           </div>
 
-          <button
-            onClick={handleGoogleLogin}
-            className="w-full btn-metallic py-3 px-4 rounded-lg flex items-center justify-center gap-3 relative z-10 group"
-          >
+          <button onClick={handleGoogleLogin} type="button" className="w-full btn-metallic py-3 px-4 rounded-lg flex items-center justify-center gap-3 relative z-10 group">
             <FcGoogle className="text-xl group-hover:scale-110 transition-transform" />
             <span className="font-mono text-sm tracking-wide">Continue with Google</span>
           </button>
 
           <div className="mt-8 text-center relative z-10">
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm font-mono text-gray-400 hover:text-cyan-glow transition-colors"
-            >
+            <button onClick={() => setIsLogin(!isLogin)} type="button" className="text-sm font-mono text-gray-400 hover:text-cyan-glow transition-colors">
               {isLogin ? "Don't have a vault? " : "Already have a vault? "}
               <span className="text-cyan-glow underline decoration-cyan-glow/30 underline-offset-4">
                 {isLogin ? 'Create one' : 'Access it'}
               </span>
             </button>
           </div>
+
         </motion.div>
       </motion.div>
     </div>

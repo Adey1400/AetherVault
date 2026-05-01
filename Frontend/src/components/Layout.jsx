@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import Navbar from './Navbar';
+
 
 const Layout = ({ children }) => {
   const pageTransitionVariants = {
@@ -26,8 +26,7 @@ const Layout = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-obsidian-900">
-      {/* Navbar */}
-      <Navbar />
+
 
       {/* Main Content Area */}
       <main className="md:ml-80 pt-20 md:pt-8">

@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { initializeVaultStatus } from '../services/api'; 
 // 1. Import your Context Hook
 import { useVault } from '../context/VaultContext';
-
+import { saveUserSecret } from '../services/api';
+import { encryptSecret } from '../utils/crypto';
 // Helper function to generate a mathematically secure, readable key
 const generateSecureKey = () => {
   const array = new Uint8Array(16);
