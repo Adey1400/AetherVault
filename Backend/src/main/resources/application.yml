@@ -7,9 +7,9 @@ spring:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/aethervault}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:1234}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: update
