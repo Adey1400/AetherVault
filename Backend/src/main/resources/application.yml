@@ -7,10 +7,15 @@ spring:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    # PUT YOUR REAL SUPABASE URL HERE
+    url: jdbc:postgresql://db.qrhyeydljnbjklsdvyls.supabase.co:5432/postgres
+    # PUT YOUR REAL POSTGRES USERNAME HERE
+    username: postgres
+    # PUT YOUR REAL SUPABASE PASSWORD HERE
+    password: YourActualPasswordHere
+    driver-class-name: org.postgresql.Driver
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
     show-sql: true
